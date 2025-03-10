@@ -1,0 +1,63 @@
+version: '3.3'
+
+services:
+  mysql:
+    image: mysql:latest
+    container_name: mysql-container
+    restart: always
+    environment:
+    
+      MYSQL_ROOT_PASSWORD: qwerty
+      MYSQL_DATABASE: my_new_db
+      MYSQL_USER: myuser
+      MYSQL_PASSWORD: mypassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./server  # Ensure Dockerfile is inside 'server/'
+      dockerfile: Dockerfile
+    container_name: my-server
+    restart: always
+    depends_on:
+      - mysql
+
+    environment:
+      DB_HOST: mysql
+      DB_USER: myuser
+      DB_PASSWORD: mypassword
+      DB_DATABASE: my_new_db
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
+    command: ["sh", "-c", "sleep 10 && node index.js"]  # Wait for MySQL to be ready
+
+  frontend:
+    build:
+      context: ./frontend # Ensure Dockerfile is inside 'client/'
+      dockerfile: Dockerfile
+    container_name: my-react-app
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "5000:5000"
+    networks:
+      - app-network
+
+volumes:
+  mysql_data:
+
+networks:
+  app-network:
