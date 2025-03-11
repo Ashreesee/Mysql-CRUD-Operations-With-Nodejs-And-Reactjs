@@ -16,5 +16,5 @@ COPY . .
 # Expose the application's port
 EXPOSE 3000
 
-# Command to start the application
-CMD ["node", "index.js"]
+# Wait for the database to be ready before starting the app
+CMD ["sh", "-c", "until nc -z -v -w30 $DB_HOST 3306; do echo 'Waiting for database...'; sleep 5; done && node index.js"]
