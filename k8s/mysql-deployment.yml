@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-db
+  labels:
+    app: mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+        - name: mysql  # Fixed indentation
+          image: mysql:latest
+          env:  # Fixed env formatting
+            - name: MYSQL_ROOT_PASSWORD
+              value: "qwerty"
+            - name: MYSQL_DATABASE
+              value: "my_new_db"
+          ports:
+            - containerPort: 3306  # Fixed indentation
+          volumeMounts:
+            - name: mysql-storage
+              mountPath: /var/lib/mysql
+      volumes:
+        - name: mysql-storage
+          emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service
+spec:
+  selector:
+    app: mysql
+  ports:
+    - protocol: TCP  # Fixed indentation
+      port: 3306
+      targetPort: 3306
+  clusterIP: None
