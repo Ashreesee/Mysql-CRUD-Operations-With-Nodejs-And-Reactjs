@@ -1,4 +1,6 @@
 MySQL CRUD - Node.js, React.js
+
+
 This application allows users to perform CRUD (Create, Read, Update, Delete) operations on user data, including storing the name and email of users, each with a specific ID. The stack consists of:
 
 MySQL as the database,
