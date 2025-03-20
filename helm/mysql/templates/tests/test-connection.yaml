@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-connection
+  labels:
+    app: {{ include "mysql.name" . }}
+spec:
+  containers:
+    - name: mysql-client
+      image: mysql:8
+      command: ["sh", "-c", "until mysql -h {{ .Values.mysql.host }} -u {{ .Values.mysql.username }} -p{{ .Values.mysql.password }} -e 'SELECT 1'; do echo waiting for mysql; sleep 2; done"]
+      env:
+        - name: MYSQL_HOST
+          value: "mysql-service"  # Replace with your MySQL service name if different
+        - name: MYSQL_USER
+          value: "root"  # Replace with your MySQL username
+        - name: MYSQL_PASSWORD
+          value: "qwerty"  # Replace with your MySQL password
+        - name: MYSQL_DB
+          value: "my_new_db"  # Replace with your MySQL database name

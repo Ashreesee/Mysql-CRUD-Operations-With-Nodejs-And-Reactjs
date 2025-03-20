@@ -1,0 +1,50 @@
+mysql:
+  enabled: true
+  image: mysql:8
+  username: root
+  password: qwerty
+  database: my_new_db
+  service:
+    type: ClusterIP
+    port: 3306
+
+backend:
+  enabled: true
+  image: ashreesee/backend:latest
+  replicas: 1
+  env:
+    - name: DB_HOST
+      value: "mysql-service"
+    - name: DB_USER
+      value: "root"
+    - name: DB_PASS
+      value: "qwerty"
+  service:
+    type: LoadBalancer
+    port: 3000
+
+frontend:
+  enabled: true
+  image: ashreesee/frontend:latest
+  replicas: 1
+  env:
+    - name: API_URL
+      value: "http://backend:3000"
+  service:
+    type: LoadBalancer
+    port: 5000
+
+serviceAccount:
+  create: true
+  name: "my-app-sa"
+
+ingress:
+  enabled: true
+  host: my-app.local
+
+
+autoscaling:
+  enabled: false  # Set to true if you want autoscaling
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80

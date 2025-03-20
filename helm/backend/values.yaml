@@ -1,0 +1,42 @@
+backend:
+  enabled: true
+  image: ashreesee/backend:latest
+  replicas: 1
+  env:
+    - name: DB_HOST
+      value: "mysql-service"  # Assuming MySQL is still required by the backend
+    - name: DB_USER
+      value: "root"
+    - name: DB_PASS
+      value: "qwerty"
+  service:
+    type: LoadBalancer
+    port: 3000
+
+serviceAccount:
+  create: true
+  name: "my-app-aa"
+
+ingress:
+  enabled: true
+  host: my-app.local
+  rules:
+    - host: my-app.local
+      http:
+        paths:
+          - path: /backend
+            pathType: Prefix
+            backend:
+              service:
+                name: backend-service
+                port:
+                  number: 3000
+
+autoscaling:
+  enabled: false  # Set to true if you want autoscaling
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+
+testConnection:
+  enabled: true

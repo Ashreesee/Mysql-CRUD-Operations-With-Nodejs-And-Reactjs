@@ -1,0 +1,16 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "mysql.fullname" . }}
+spec:
+  rules:
+    - host: {{ .Values.ingress.host | default "my-app.local" }}
+      http:
+        paths:
+          - path: /mysql
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.mysql.service.name | default "mysql-service" }}
+                port:
+                  number: {{ .Values.mysql.service.port | default 3306 }}

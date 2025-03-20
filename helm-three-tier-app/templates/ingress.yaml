@@ -1,0 +1,30 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "helm-three-tier-app.fullname" . }}
+spec:
+  rules:
+    - host: {{ .Values.ingress.host | default "my-app.local" }}
+      http:
+        paths:
+          - path: /frontend
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.frontend.service.name | default "frontend-service" }}
+                port:
+                  number: {{ .Values.frontend.service.port | default 5000 }}
+          - path: /backend
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.backend.service.name | default "backend-service" }}
+                port:
+                  number: {{ .Values.backend.service.port | default 3000 }}
+          - path: /mysql
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.mysql.service.name | default "mysql-service" }}
+                port:
+                  number: {{ .Values.mysql.service.port | default 3306 }}

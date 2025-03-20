@@ -1,0 +1,23 @@
+mysql:
+  enabled: true
+  image: mysql:8
+  username: root
+  password: qwerty
+  database: my_new_db
+  service:
+    type: ClusterIP
+    port: 3306
+
+serviceAccount:
+  create: true
+  name: "my-app-ba"
+
+ingress:
+  enabled: true
+  host: my-app.local
+
+autoscaling:
+  enabled: false  # Set to true if you want autoscaling
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80

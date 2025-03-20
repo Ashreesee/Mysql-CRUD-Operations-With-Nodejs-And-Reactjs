@@ -1,0 +1,16 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "frontend.fullname" . }}
+spec:
+  rules:
+    - host: {{ .Values.ingress.host | default "my-app.local" }}
+      http:
+        paths:
+          - path: /frontend
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.frontend.service.name | default "frontend-service" }}
+                port:
+                  number: {{ .Values.frontend.service.port | default 5000 }}

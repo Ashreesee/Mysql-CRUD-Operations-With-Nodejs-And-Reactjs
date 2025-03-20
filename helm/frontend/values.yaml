@@ -1,0 +1,34 @@
+frontend:
+  enabled: true
+  image: ashreesee/frontend:latest
+  replicas: 1
+  env:
+    - name: API_URL
+      value: "http://backend:3000"  # You can adjust this if needed
+  service:
+    type: LoadBalancer
+    port: 5000
+
+serviceAccount:
+  create: true
+  name: "my-app-sa"
+
+ingress:
+  enabled: true
+  host: my-app.local
+  rules:
+    - http:
+        paths:
+          - path: /frontend
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend-service
+                port:
+                  number: 5000
+
+autoscaling:
+  enabled: false  # Set to true if you want autoscaling
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80

@@ -1,0 +1,33 @@
+{{- if .Values.testConnection.enabled }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-connection-backend
+  labels:
+    app: {{ include "backend.name" . }}
+spec:
+  containers:
+    - name: backend-client
+      image: {{ .Values.backend.image | default "ashreesee/backend:latest" }}
+      command:
+        - "sh"
+        - "-c"
+        - |
+          until curl -s http://{{ .Values.backend.host }}:{{ .Values.backend.port }}/health; do
+            echo "waiting for backend"
+            sleep 2
+          done
+      env:
+        - name: BACKEND_HOST
+          value: "backend-service"  # Replace with your backend service name
+        - name: BACKEND_PORT
+          value: "3000"  # Replace with your backend service port
+        - name: DB_HOST
+          value: "mysql-service"  # Replace with MySQL service name
+        - name: DB_USER
+          value: "root"  # Replace with MySQL user
+        - name: DB_PASS
+          value: "qwerty"  # Replace with MySQL password
+        - name: DB_NAME
+          value: "my_new_db"  # Replace with your MySQL database name
+{{- end }}
