@@ -30,3 +30,91 @@ git clone <repository_url>
 
 ### 2. Navigate to Project Directory
 Move into the project directory:
+```bash
+cd <project_directory>
+```
+### 3. Install Dependencies
+First, install the dependencies for the backend and frontend:
+
+#### Frontend
+Navigate to the frontend directory and run the following:
+
+```bash
+cd frontend
+npm install
+```
+
+#### Backend
+Navigate to the backend directory and run:
+
+```bash
+cd backend
+npm install
+```
+
+### 4. Setup Environment Variables
+Create a .env file in the root of your project directory and add the variables given in .env.sample (for MySQL connection, API URL, etc.).
+
+### 5. Run the Development Server
+Start the backend and frontend servers:
+
+#### Frontend
+```bash
+cd frontend
+npm start
+```
+
+#### Backend
+```bash
+cd backend
+npm start
+```
+
+### 6. Access the App Locally
+Frontend: Open your web browser and navigate to http://localhost:3000.
+Backend: The backend API will be available at http://localhost:5000.
+The app should now be running locally on your machine, connected to your MySQL database using the environment variables specified in the .env file.
+
+### 7. Docker Setup (Optional)
+To run the application using Docker and Docker Compose, you can use the provided docker-compose.yml file.
+
+#### Build and Start Containers
+From the root of the project directory, run:
+
+```bash
+docker-compose up --build
+```
+This will start the frontend, backend, and MySQL containers.
+
+#### Access the App
+Frontend: Open http://localhost:3000.
+Backend: Open http://localhost:5000.
+### 8. Kubernetes Setup (Optional)
+To deploy the application using Kubernetes, use the configuration files in the k8s/ folder.
+
+#### Deploy the Application
+```bash
+kubectl apply -f k8s/
+```
+Access the App
+Once the pods are running, you can use kubectl get services to find the LoadBalancer's IP or use port forwarding to access the services.
+
+### 9. Helm Chart Setup (Optional)
+Helm charts are used to deploy the frontend, backend, and MySQL components to Kubernetes. You can either deploy them separately or use the single-parent Helm chart to deploy the entire stack.
+
+Deploy Using the Parent Helm Chart
+```bash
+cd helm
+helm install helm-three-tier-app .
+```
+This will install all the components (frontend, backend, and MySQL) using the Helm charts.
+
+#### Deploy Individual Components
+If you want to deploy only one component (e.g., the frontend), you can install its individual Helm chart. For example:
+
+```bash
+helm install frontend ./frontend
+helm install backend ./backend
+helm install mysql ./mysql
+```
+
