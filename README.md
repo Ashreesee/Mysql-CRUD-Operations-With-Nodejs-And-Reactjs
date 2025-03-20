@@ -26,3 +26,7 @@ Clone this repository to your local machine:
 
 ```bash
 git clone <repository_url>
+```
+
+### 2. Navigate to Project Directory
+Move into the project directory:
