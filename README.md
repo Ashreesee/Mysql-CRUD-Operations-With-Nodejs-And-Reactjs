@@ -102,9 +102,9 @@ Once the pods are running, you can use kubectl get services to find the LoadBala
 ### 9. Helm Chart Setup (Optional)
 Helm charts are used to deploy the frontend, backend, and MySQL components to Kubernetes. You can either deploy them separately or use the single-parent Helm chart to deploy the entire stack.
 
-Deploy Using the Parent Helm Chart
+#### Deploy Using the Parent Helm Chart
 ```bash
-cd helm
+cd helm-three-tier-app
 helm install helm-three-tier-app .
 ```
 This will install all the components (frontend, backend, and MySQL) using the Helm charts.
@@ -113,6 +113,7 @@ This will install all the components (frontend, backend, and MySQL) using the He
 If you want to deploy only one component (e.g., the frontend), you can install its individual Helm chart. For example:
 
 ```bash
+cd helm
 helm install frontend ./frontend
 helm install backend ./backend
 helm install mysql ./mysql
