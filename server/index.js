@@ -8,7 +8,7 @@ const bodyParser = require('body-parser');
 const cors = require("cors")
 dotenv.config();
 //using the port in environmental variable or 5000
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 3000;
 
 // middleware to parse incoming request in bodies
 app.use(express.json());
@@ -31,7 +31,7 @@ let pool;
     app.use("/", router);
 
     // start the server
-    app.listen(port, () => {
-        console.log(`Example app listening on port http://localhost:${port}`);
+    app.listen(3000, '0.0.0.0', () => {
+        console.log('Example app listening on port 3000');
     });
 })();
