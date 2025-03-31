@@ -77,7 +77,7 @@ pipeline {
             steps {
                 script {
                     echo "🔄 Starting Deployment to EKS..."
-                    withAWS(credentials: AWS_CREDENTIALS_ID, region: AWS_REGION) {
+                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: AWS_CREDENTIALS_ID]]) {
                         sh """
                         echo "🔧 Configuring kubectl for EKS..."
                         aws eks --region ${AWS_REGION} update-kubeconfig --name ${EKS_CLUSTER_NAME}
