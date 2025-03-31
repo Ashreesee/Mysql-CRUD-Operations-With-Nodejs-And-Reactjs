@@ -74,28 +74,27 @@ pipeline {
 }
 
         stage('Deploy to EKS using Helm') {
-            steps {
-                script {
-                    echo "🔄 Starting Deployment to EKS..."
-                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: AWS_CREDENTIALS_ID]]) {
-                        sh """
-                        echo "🔧 Configuring kubectl for EKS..."
-                        aws eks --region ${AWS_REGION} update-kubeconfig --name ${EKS_CLUSTER_NAME}
+    steps {
+        script {
+            echo "🔄 Starting Deployment to EKS..."
+            withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: AWS_CREDENTIALS_ID]]) {
+                sh """
+                set -x  # Enable debug mode
+                echo "🔧 Configuring kubectl for EKS..."
+                aws eks --region ${AWS_REGION} update-kubeconfig --name ${EKS_CLUSTER_NAME}
+                kubectl get nodes
 
-                        echo "📦 Deploying MySQL..."
-                        helm upgrade --install mysql helm/mysql
+                echo "📦 Deploying MySQL..."
+                helm upgrade --install mysql /home/ashree/Documents/Mysql-CRUD-Operations-With-Nodejs-And-Reactjs/helm/mysql --debug
 
-                        echo "🚀 Deploying Backend..."
-                        helm upgrade --install backend helm/backend
+                echo "🚀 Deploying Backend..."
+                helm upgrade --install backend /home/ashree/Documents/Mysql-CRUD-Operations-With-Nodejs-And-Reactjs/helm/backend --debug
 
-                        echo "🚀 Deploying Frontend..."
-                        helm upgrade --install frontend helm/frontend
-                        """
-                    }
-                    echo "✅ Deployment Completed!"
-                }
+                echo "🚀 Deploying Frontend..."
+                helm upgrade --install frontend /home/ashree/Documents/Mysql-CRUD-Operations-With-Nodejs-And-Reactjs/helm/frontend --debug
+                """
             }
+            echo "✅ Deployment Completed!"
         }
     }
 }
-
