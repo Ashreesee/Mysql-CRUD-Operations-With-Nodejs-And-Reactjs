@@ -65,36 +65,31 @@ pipeline {
         }
 
         stage('Deploy to EKS using Helm') {
-            steps {
-                script {
-                    echo "🔄 Starting Deployment to EKS..."
-                    withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_PATH')]) {
-                        sh """
-                        export KUBECONFIG=/home/ashree/Desktop/kubeconfig  # ✅ Fixed Path
+    steps {
+        script {
+            echo "🔄 Starting Deployment to EKS..."
+            withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_PATH')]) {
+                sh """
+                export KUBECONFIG=/home/ashree/Desktop/kubeconfig
+                echo "✅ Using KUBECONFIG at: $KUBECONFIG"
+                
+                echo "🔍 Checking if Kubernetes is reachable..."
+                kubectl cluster-info || (echo "❌ EKS Cluster is unreachable!" && exit 1)
 
-                        echo "🔧 Configuring kubectl for EKS..."
-                        aws eks --region ${AWS_REGION} update-kubeconfig --name ${EKS_CLUSTER_NAME}
-                        
-                        echo "🔍 Verifying kubectl access..."
-                        kubectl get nodes || (echo "❌ Unable to communicate with cluster" && exit 1)  # ✅ Exit if it fails
+                echo "🔍 Checking existing Helm deployments..."
+                helm list || (echo "❌ Helm is not working!" && exit 1)
 
-                        echo "🔄 Switching to Helm directory..."
-                        cd ${HELM_DIR} || (echo "❌ Helm directory not found!" && exit 1)  # ✅ Exit if not found
+                echo "📦 Deploying MySQL..."
+                helm upgrade --install mysql /home/ashree/Documents/Mysql-CRUD-Operations-With-Nodejs-And-Reactjs/helm/mysql --debug || (echo "❌ MySQL Deployment Failed" && exit 1)
 
-                        echo "📦 Deploying MySQL..."
-                        helm upgrade --install mysql mysql --debug || (echo "❌ MySQL Deployment Failed" && exit 1)
+                echo "🚀 Deploying Backend..."
+                helm upgrade --install backend /home/ashree/Documents/Mysql-CRUD-Operations-With-Nodejs-And-Reactjs/helm/backend --debug || (echo "❌ Backend Deployment Failed" && exit 1)
 
-                        echo "🚀 Deploying Backend..."
-                        helm upgrade --install backend backend --debug || (echo "❌ Backend Deployment Failed" && exit 1)
-
-                        echo "🚀 Deploying Frontend..."
-                        helm upgrade --install frontend frontend --debug || (echo "❌ Frontend Deployment Failed" && exit 1)
-                        """
-                    }
-                    echo "✅ Deployment Completed!"
-                }
+                echo "🚀 Deploying Frontend..."
+                helm upgrade --install frontend /home/ashree/Documents/Mysql-CRUD-Operations-With-Nodejs-And-Reactjs/helm/frontend --debug || (echo "❌ Frontend Deployment Failed" && exit 1)
+                """
             }
+            echo "✅ Deployment Completed!"
         }
     }
 }
-
