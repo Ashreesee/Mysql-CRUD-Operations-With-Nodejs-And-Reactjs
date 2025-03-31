@@ -5,10 +5,10 @@ pipeline {
         AWS_CREDENTIALS_ID = 'NmWSL0{@'
         DOCKER_CREDENTIALS_ID = '^kyYjiNR82ihur%'
         EKS_CLUSTER_NAME = 'new-c'
-        AWS_REGION = 'ap-south-1'  // Ensure this matches your EKS cluster region
+        AWS_REGION = 'ap-south-1'
         DOCKER_IMAGE_FRONTEND = 'ashreesee/frontend'
         DOCKER_IMAGE_BACKEND = 'ashreesee/backend'
-        DOCKER_IMAGE_DB = 'mysql'  // Assuming MySQL is from Docker Hub
+        DOCKER_IMAGE_DB = 'mysql'
     }
 
     stages {
@@ -21,14 +21,30 @@ pipeline {
         stage('Build and Push Docker Images') {
             steps {
                 script {
-                    docker.withRegistry('https://index.docker.io/v1/', DOCKER_CREDENTIALS_ID) {
-                        sh """
-                        docker build -t ${DOCKER_IMAGE_FRONTEND}:latest ./frontend
-                        docker push ${DOCKER_IMAGE_FRONTEND}:latest
+                    try {
+                        sh 'docker --version'  // Check if Docker is installed
+                        
+                        // Manually log into Docker
+                        withCredentials([string(credentialsId: DOCKER_CREDENTIALS_ID, variable: 'DOCKER_PASS')]) {
+                            sh "echo $DOCKER_PASS | docker login -u ashreesee --password-stdin"
 
-                        docker build -t ${DOCKER_IMAGE_BACKEND}:latest ./backend
-                        docker push ${DOCKER_IMAGE_BACKEND}:latest
-                        """
+                            // Build and push frontend
+                            sh """
+                            echo "Building frontend..."
+                            docker build -t $DOCKER_IMAGE_FRONTEND:latest ./frontend || exit 1
+                            docker push $DOCKER_IMAGE_FRONTEND:latest || exit 1
+                            """
+
+                            // Build and push backend
+                            sh """
+                            echo "Building backend..."
+                            docker build -t $DOCKER_IMAGE_BACKEND:latest ./backend || exit 1
+                            docker push $DOCKER_IMAGE_BACKEND:latest || exit 1
+                            """
+                        }
+                    } catch (Exception e) {
+                        echo "Error: ${e.message}"
+                        error("Docker build and push failed!")
                     }
                 }
             }
@@ -39,19 +55,17 @@ pipeline {
                 script {
                     withAWS(credentials: AWS_CREDENTIALS_ID, region: AWS_REGION) {
                         sh """
-                        aws eks --region ${AWS_REGION} update-kubeconfig --name ${EKS_CLUSTER_NAME}
+                        echo "Configuring kubectl for EKS..."
+                        aws eks --region ${AWS_REGION} update-kubeconfig --name ${EKS_CLUSTER_NAME} || exit 1
 
-                        # Ensure Helm folder exists
-                        if [ ! -d "helm" ]; then echo 'Helm directory not found!'; exit 1; fi
+                        echo "Deploying MySQL..."
+                        helm upgrade --install mysql helm/mysql || exit 1
 
-                        # Deploy MySQL using official Helm chart (optional)
-                        helm upgrade --install mysql helm/mysql
+                        echo "Deploying Backend..."
+                        helm upgrade --install backend helm/backend || exit 1
 
-                        # Deploy Backend
-                        helm upgrade --install backend helm/backend
-
-                        # Deploy Frontend
-                        helm upgrade --install frontend helm/frontend
+                        echo "Deploying Frontend..."
+                        helm upgrade --install frontend helm/frontend || exit 1
                         """
                     }
                 }
