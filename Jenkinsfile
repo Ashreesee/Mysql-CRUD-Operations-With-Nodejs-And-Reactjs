@@ -14,37 +14,42 @@ pipeline {
     stages {
         stage('Clone Repository') {
             steps {
-                git branch: 'main', url: 'https://github.com/Ashreesee/Mysql-CRUD-Operations-With-Nodejs-And-Reactjs.git'
+                script {
+                    echo "🔄 Cloning Repository..."
+                    git branch: 'main', url: 'https://github.com/Ashreesee/Mysql-CRUD-Operations-With-Nodejs-And-Reactjs.git'
+                    echo "✅ Repository Cloned!"
+                }
             }
         }
 
         stage('Build and Push Docker Images') {
             steps {
                 script {
-                    try {
-                        sh 'docker --version'  // Check if Docker is installed
+                    echo "🔍 Checking Docker Version..."
+                    sh 'docker --version'  // Debug Docker installation
                         
-                        // Manually log into Docker
-                        withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                         sh "echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin"
-                            }
-                            // Build and push frontend
-                            sh """
-                            echo "Building frontend..."
-                            docker build -t $DOCKER_IMAGE_FRONTEND:latest ./frontend || exit 1
-                            docker push $DOCKER_IMAGE_FRONTEND:latest || exit 1
-                            """
+                    echo "🔑 Logging into Docker Hub..."
+                    withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        sh "echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin"
+                    }
 
-                            // Build and push backend
-                            sh """
-                            echo "Building backend..."
-                            docker build -t $DOCKER_IMAGE_BACKEND:latest ./backend || exit 1
-                            docker push $DOCKER_IMAGE_BACKEND:latest || exit 1
-                            """
-                        }
+                    try {
+                        echo "🚀 Building and Pushing Frontend..."
+                        sh """
+                        docker build -t $DOCKER_IMAGE_FRONTEND:latest ./frontend
+                        docker push $DOCKER_IMAGE_FRONTEND:latest
+                        """
+
+                        echo "🚀 Building and Pushing Backend..."
+                        sh """
+                        docker build -t $DOCKER_IMAGE_BACKEND:latest ./backend
+                        docker push $DOCKER_IMAGE_BACKEND:latest
+                        """
+
+                        echo "✅ Docker Build & Push Completed!"
                     } catch (Exception e) {
-                        echo "Error: ${e.message}"
-                        error("Docker build and push failed!")
+                        echo "❌ Error: ${e.message}"
+                        error("🚨 Docker build and push failed!")
                     }
                 }
             }
@@ -53,23 +58,26 @@ pipeline {
         stage('Deploy to EKS using Helm') {
             steps {
                 script {
+                    echo "🔄 Starting Deployment to EKS..."
                     withAWS(credentials: AWS_CREDENTIALS_ID, region: AWS_REGION) {
                         sh """
-                        echo "Configuring kubectl for EKS..."
-                        aws eks --region ${AWS_REGION} update-kubeconfig --name ${EKS_CLUSTER_NAME} || exit 1
+                        echo "🔧 Configuring kubectl for EKS..."
+                        aws eks --region ${AWS_REGION} update-kubeconfig --name ${EKS_CLUSTER_NAME}
 
-                        echo "Deploying MySQL..."
-                        helm upgrade --install mysql helm/mysql || exit 1
+                        echo "📦 Deploying MySQL..."
+                        helm upgrade --install mysql helm/mysql
 
-                        echo "Deploying Backend..."
-                        helm upgrade --install backend helm/backend || exit 1
+                        echo "🚀 Deploying Backend..."
+                        helm upgrade --install backend helm/backend
 
-                        echo "Deploying Frontend..."
-                        helm upgrade --install frontend helm/frontend || exit 1
+                        echo "🚀 Deploying Frontend..."
+                        helm upgrade --install frontend helm/frontend
                         """
                     }
+                    echo "✅ Deployment Completed!"
                 }
             }
         }
     }
 }
+
