@@ -60,7 +60,18 @@ pipeline {
         }
     }
 }
-
+        stage('Verify AWS Credentials') {
+    steps {
+        script {
+            withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: AWS_CREDENTIALS_ID]]) {
+                sh '''
+                echo "🔄 Checking AWS Identity..."
+                aws sts get-caller-identity || echo "❌ AWS Credentials are incorrect"
+                '''
+            }
+        }
+    }
+}
 
         stage('Deploy to EKS using Helm') {
             steps {
