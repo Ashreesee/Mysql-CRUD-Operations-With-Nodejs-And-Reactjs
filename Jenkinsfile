@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         AWS_CREDENTIALS_ID = 'aws-credentials'
-        DOCKER_CREDENTIALS_ID = 'docker-credentials'
+        DOCKER_CREDENTIALS_ID = 'docker-hub-credentials'
         EKS_CLUSTER_NAME = 'new-c'
         AWS_REGION = 'ap-south-1'
         DOCKER_IMAGE_FRONTEND = 'ashreesee/frontend'
@@ -25,9 +25,9 @@ pipeline {
                         sh 'docker --version'  // Check if Docker is installed
                         
                         // Manually log into Docker
-                        withCredentials([string(credentialsId: DOCKER_CREDENTIALS_ID, variable: 'DOCKER_PASS')]) {
-                            sh "echo $DOCKER_PASS | docker login -u ashreesee --password-stdin"
-
+                        withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                         sh "echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin"
+                            }
                             // Build and push frontend
                             sh """
                             echo "Building frontend..."
