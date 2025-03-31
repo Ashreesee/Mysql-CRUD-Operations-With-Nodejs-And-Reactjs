@@ -23,37 +23,44 @@ pipeline {
         }
 
         stage('Build and Push Docker Images') {
-            steps {
-                script {
-                    echo "🔍 Checking Docker Version..."
-                    sh 'docker --version'  // Debug Docker installation
-                        
-                    echo "🔑 Logging into Docker Hub..."
-                    withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                        sh "echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin"
-                    }
+    steps {
+        script {
+            echo "🔍 Checking Docker Version..."
+            sh 'docker --version'
 
-                    try {
-                        echo "🚀 Building and Pushing Frontend..."
-                        sh """
-                        docker build -t $DOCKER_IMAGE_FRONTEND:latest ./frontend
-                        docker push $DOCKER_IMAGE_FRONTEND:latest
-                        """
+            echo "🔑 Logging into Docker Hub..."
+            withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                sh "echo ${DOCKER_PASS} | docker login -u ${DOCKER_USER} --password-stdin"
+            }
 
-                        echo "🚀 Building and Pushing Backend..."
-                        sh """
-                        docker build -t $DOCKER_IMAGE_BACKEND:latest ./backend
-                        docker push $DOCKER_IMAGE_BACKEND:latest
-                        """
+            try {
+                echo "🚀 Checking if frontend directory exists..."
+                sh "ls -lah frontend"
 
-                        echo "✅ Docker Build & Push Completed!"
-                    } catch (Exception e) {
-                        echo "❌ Error: ${e.message}"
-                        error("🚨 Docker build and push failed!")
-                    }
-                }
+                echo "🚀 Building and Pushing Frontend..."
+                sh """
+                docker build --no-cache -t ${DOCKER_IMAGE_FRONTEND}:latest ./frontend
+                docker push ${DOCKER_IMAGE_FRONTEND}:latest
+                """
+
+                echo "🚀 Checking if backend directory exists..."
+                sh "ls -lah backend"
+
+                echo "🚀 Building and Pushing Backend..."
+                sh """
+                docker build --no-cache -t ${DOCKER_IMAGE_BACKEND}:latest ./backend
+                docker push ${DOCKER_IMAGE_BACKEND}:latest
+                """
+
+                echo "✅ Docker Build & Push Completed!"
+            } catch (Exception e) {
+                echo "❌ Error: ${e.message}"
+                error("🚨 Docker build and push failed!")
             }
         }
+    }
+}
+
 
         stage('Deploy to EKS using Helm') {
             steps {
