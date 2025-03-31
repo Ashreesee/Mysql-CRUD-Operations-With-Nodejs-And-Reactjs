@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        AWS_CREDENTIALS_ID = 'NmWSL0{@'
-        DOCKER_CREDENTIALS_ID = '^kyYjiNR82ihur%'
+        AWS_CREDENTIALS_ID = 'aws-credentials'
+        DOCKER_CREDENTIALS_ID = 'docker-credentials'
         EKS_CLUSTER_NAME = 'new-c'
         AWS_REGION = 'ap-south-1'
         DOCKER_IMAGE_FRONTEND = 'ashreesee/frontend'
