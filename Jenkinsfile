@@ -4,7 +4,7 @@ pipeline {
     environment {
         AWS_CREDENTIALS_ID = 'aws-credentials'
         DOCKER_CREDENTIALS_ID = 'docker-hub-credentials'
-        EKS_CLUSTER_NAME = 'new-c'
+        EKS_CLUSTER_NAME = 'jenkins'
         AWS_REGION = 'ap-south-1'
         DOCKER_IMAGE_FRONTEND = 'ashreesee/frontend'
         DOCKER_IMAGE_BACKEND = 'ashreesee/backend'
