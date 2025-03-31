@@ -74,27 +74,38 @@ pipeline {
 }
 
         stage('Deploy to EKS using Helm') {
-    steps {
-        script {
-            echo "🔄 Starting Deployment to EKS..."
-            withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: AWS_CREDENTIALS_ID]]) {
-                sh """
-                set -x  # Enable debug mode
-                echo "🔧 Configuring kubectl for EKS..."
-                aws eks --region ${AWS_REGION} update-kubeconfig --name ${EKS_CLUSTER_NAME}
-                kubectl get nodes
+            steps {
+                script {
+                    echo "🔄 Starting Deployment to EKS..."
+                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: AWS_CREDENTIALS_ID]]) {
+                        sh """
+                        set -x  # Enable debug mode
 
-                echo "📦 Deploying MySQL..."
-                helm upgrade --install mysql /home/ashree/Documents/Mysql-CRUD-Operations-With-Nodejs-And-Reactjs/helm/mysql --debug
+                        echo "🔧 Configuring kubectl for EKS..."
+                        timeout 60 aws eks --region ${AWS_REGION} update-kubeconfig --name ${EKS_CLUSTER_NAME} || echo "❌ AWS EKS Config Failed"
 
-                echo "🚀 Deploying Backend..."
-                helm upgrade --install backend /home/ashree/Documents/Mysql-CRUD-Operations-With-Nodejs-And-Reactjs/helm/backend --debug
+                        echo "🔍 Checking if kubectl is installed..."
+                        kubectl version --client || echo "❌ kubectl is missing!"
 
-                echo "🚀 Deploying Frontend..."
-                helm upgrade --install frontend /home/ashree/Documents/Mysql-CRUD-Operations-With-Nodejs-And-Reactjs/helm/frontend --debug
-                """
+                        echo "🔍 Checking if helm is installed..."
+                        helm version || echo "❌ helm is missing!"
+
+                        echo "🔄 Switching to Helm directory..."
+                        cd ${HELM_DIR} || echo "❌ Helm directory not found!"
+
+                        echo "📦 Deploying MySQL..."
+                        timeout 60 helm upgrade --install mysql mysql --debug || echo "❌ MySQL Deployment Failed"
+
+                        echo "🚀 Deploying Backend..."
+                        timeout 60 helm upgrade --install backend backend --debug || echo "❌ Backend Deployment Failed"
+
+                        echo "🚀 Deploying Frontend..."
+                        timeout 60 helm upgrade --install frontend frontend --debug || echo "❌ Frontend Deployment Failed"
+                        """
+                    }
+                    echo "✅ Deployment Completed!"
+                }
             }
-            echo "✅ Deployment Completed!"
         }
     }
 }
