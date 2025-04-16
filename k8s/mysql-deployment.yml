@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: mysql  # Fixed indentation
-          image: mysql:latest
+          image: mysql:v1
           env:  # Fixed env formatting
             - name: MYSQL_ROOT_PASSWORD
               value: "qwerty"
