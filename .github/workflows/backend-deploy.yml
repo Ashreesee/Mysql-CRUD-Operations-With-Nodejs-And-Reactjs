@@ -57,7 +57,7 @@ jobs:
 
       - name: Build and Push Docker Image
         run: |
-          docker build -t ${{ env.IMAGE_NAME }}:${{ steps.set-tag.outputs.final_tag }} .
+          docker build -t ${{ env.IMAGE_NAME }}:${{ steps.set-tag.outputs.final_tag }} -f backend/Dockerfile backend/
           docker push ${{ env.IMAGE_NAME }}:${{ steps.set-tag.outputs.final_tag }}
 
       - name: Show pushed tag
