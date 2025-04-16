@@ -1,26 +1,35 @@
-name: Build and Push Docker Image
+# .github/workflows/backend-deploy.yml
+name: Build and Push Backend Image on k8s Change
 
 on:
   push:
-    branches: [ main ]  # or "master", depending on your repo
+    branches: [main]
+    paths:
+      - 'k8s/backend-deployment.yml'
+
 env:
-  AWS_REGION: ap-south-1
-  EKS_CLUSTER_NAME: devops
   DOCKERHUB_NAMESPACE: ashreesee
-  IMAGE_TAG: latest
 
 jobs:
   build-and-push:
-    name: Build and Push Docker Images
+    name: Build and Push Docker Image
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+    - name: Checkout Repository
+      uses: actions/checkout@v4
 
-      - name: Log in to Docker Hub
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+    - name: Extract image tag from deployment file
+      id: tag
+      run: |
+        IMAGE_TAG=$(grep 'image:' k8s/backend-deployment.yml | sed 's/.*://')
+        echo "Using tag: $IMAGE_TAG"
+        echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
 
-      - name: Build and Push Backend Image
-        run: |
-          docker build -t $DOCKERHUB_NAMESPACE/backend:$IMAGE_TAG ./backend
-          docker push $DOCKERHUB_NAMESPACE/backend:$IMAGE_TAG
+    - name: Log in to Docker Hub
+      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+    - name: Build and push Docker image
+      run: |
+        docker build -t ${{ env.DOCKERHUB_NAMESPACE }}/backend:${{ env.IMAGE_TAG }} ./backend
+        docker push ${{ env.DOCKERHUB_NAMESPACE }}/backend:${{ env.IMAGE_TAG }}
