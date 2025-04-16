@@ -54,13 +54,19 @@ jobs:
       - name: Deploy MySQL
         run: |
           helm upgrade --install mysql helm/mysql
+          --namespace mysql \
+          --create-namespace
 
       - name: Deploy Backend
         run: |
           helm upgrade --install backend helm/backend \
             --set image=$DOCKERHUB_NAMESPACE/backend:$IMAGE_TAG
+            --namespace backend \
+            --create-namespace
 
       - name: Deploy Frontend
         run: |
           helm upgrade --install frontend helm/frontend \
             --set image=$DOCKERHUB_NAMESPACE/frontend:$IMAGE_TAG
+            --namespace frontend \
+            --create-namespace
