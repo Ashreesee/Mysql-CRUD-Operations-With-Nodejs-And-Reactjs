@@ -7,7 +7,7 @@ on:
 
 env:
   AWS_REGION: ap-south-1
-  EKS_CLUSTER_NAME: jenkins
+  EKS_CLUSTER_NAME: devops
   DOCKERHUB_NAMESPACE: ashreesee
   IMAGE_TAG: latest
 
