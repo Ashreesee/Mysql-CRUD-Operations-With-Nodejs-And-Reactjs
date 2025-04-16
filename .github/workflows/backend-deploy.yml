@@ -3,7 +3,7 @@ name: Docker Auto Push
 on:
   push:
     branches:
-      - main  # or change to your default branch
+      - main  # Change this to your default branch if needed
 
 jobs:
   build-and-push:
@@ -11,7 +11,7 @@ jobs:
 
     env:
       IMAGE_NAME: ashreesee/backend
-      DOCKER_REGISTRY: docker.io  # change if using GHCR, ECR, etc.
+      DOCKER_REGISTRY: docker.io
 
     steps:
       - name: Checkout Code
@@ -26,39 +26,19 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Get short SHA for tag
+      - name: Generate SHA + Timestamp tag
         id: vars
         run: |
           SHORT_SHA=${GITHUB_SHA::7}
-          echo "sha_tag=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
-
-      - name: Check if image exists on registry
-        id: check-image
-        run: |
-          IMAGE=${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.sha_tag }}
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            https://index.docker.io/v1/repositories/${{ env.IMAGE_NAME }}/tags/${{ steps.vars.outputs.sha_tag }})
-
-          if [ "$STATUS" = "200" ]; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Set tag (unique if exists)
-        id: set-tag
-        run: |
-          if [ "${{ steps.check-image.outputs.exists }}" = "true" ]; then
-            NEW_TAG="${{ steps.vars.outputs.sha_tag }}-$(date +%s)"
-          else
-            NEW_TAG="${{ steps.vars.outputs.sha_tag }}"
-          fi
-          echo "final_tag=${NEW_TAG}" >> $GITHUB_OUTPUT
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          FINAL_TAG="${SHORT_SHA}-${TIMESTAMP}"
+          echo "final_tag=${FINAL_TAG}" >> "$GITHUB_OUTPUT"
 
       - name: Build and Push Docker Image
         run: |
-          docker build -t ${{ env.IMAGE_NAME }}:${{ steps.set-tag.outputs.final_tag }} -f backend/Dockerfile backend/
-          docker push ${{ env.IMAGE_NAME }}:${{ steps.set-tag.outputs.final_tag }}
+          docker build -t ${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.final_tag }} -f backend/Dockerfile backend/
+          docker push ${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.final_tag }}
 
       - name: Show pushed tag
-        run: echo "Pushed ${{ env.IMAGE_NAME }}:${{ steps.set-tag.outputs.final_tag }}"
+        run: |
+          echo "✅ Pushed image tag: ${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.final_tag }}"
