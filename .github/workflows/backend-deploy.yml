@@ -1,35 +1,52 @@
-# .github/workflows/backend-deploy.yml
-name: Build and Push Backend Image on k8s Change
+name: Build and Deploy Backend
 
 on:
   push:
     branches: [main]
     paths:
-      - 'k8s/backend-deployment.yml'
+      - 'backend/**'
+      - 'Dockerfile'
 
 env:
-  DOCKERHUB_NAMESPACE: ashreesee
+  DOCKERHUB_USERNAME: ashreesee
+  ARGO_REPO: git@github.com:ashreesee/argo-apps-repo.git
+  IMAGE_NAME: backend
 
 jobs:
-  build-and-push:
-    name: Build and Push Docker Image
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Repository
+    - name: Checkout app repo
       uses: actions/checkout@v4
 
-    - name: Extract image tag from deployment file
-      id: tag
-      run: |
-        IMAGE_TAG=$(grep 'image:' k8s/backend-deployment.yml | sed 's/.*://')
-        echo "Using tag: $IMAGE_TAG"
-        echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+    - name: Set timestamp tag
+      id: vars
+      run: echo "IMAGE_TAG=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
 
-    - name: Log in to Docker Hub
+    - name: Docker login
       run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-    - name: Build and push Docker image
+    - name: Build and push image
       run: |
-        docker build -t ${{ env.DOCKERHUB_NAMESPACE }}/backend:${{ env.IMAGE_TAG }} ./backend
-        docker push ${{ env.DOCKERHUB_NAMESPACE }}/backend:${{ env.IMAGE_TAG }}
+        docker build -t ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} ./backend
+        docker push ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+
+    - name: Checkout Argo repo
+      uses: actions/checkout@v4
+      with:
+        repository: ashreesee/argo-apps-repo
+        token: ${{ secrets.GH_TOKEN }}
+        path: argo
+
+    - name: Update deployment YAML in Argo repo
+      run: |
+        sed -i "s|image: ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:.*|image: ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}|" argo/k8s/backend-deployment.yaml
+
+    - name: Commit and push changes to Argo repo
+      run: |
+        cd argo
+        git config user.name "github-actions"
+        git config user.email "github-actions@github.com"
+        git commit -am "Update backend image to ${{ env.IMAGE_TAG }}"
+        git push origin main
