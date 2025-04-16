@@ -9,44 +9,47 @@ on:
 
 env:
   DOCKERHUB_USERNAME: ashreesee
-  ARGO_REPO: git@github.com:ashreesee/argo-apps-repo.git
   IMAGE_NAME: backend
+  ARGO_REPO: git@github.com:ashreesee/argo-apps-repo.git
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout app repo
+    - name: Checkout App Repo
       uses: actions/checkout@v4
 
-    - name: Set timestamp tag
-      id: vars
+    - name: Generate Timestamp Tag
+      id: tag
       run: echo "IMAGE_TAG=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
 
-    - name: Docker login
+    - name: Docker Login
       run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-    - name: Build and push image
+    - name: Build & Push Docker Image
       run: |
+        echo "Tagging image as ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}"
         docker build -t ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} ./backend
         docker push ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
 
-    - name: Checkout Argo repo
+    - name: Checkout Argo Repo
       uses: actions/checkout@v4
       with:
         repository: ashreesee/argo-apps-repo
         token: ${{ secrets.GH_TOKEN }}
         path: argo
 
-    - name: Update deployment YAML in Argo repo
+    - name: Update Argo Manifest with New Tag
       run: |
         sed -i "s|image: ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:.*|image: ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}|" argo/k8s/backend-deployment.yaml
+        cat argo/k8s/backend-deployment.yaml  # debug check
 
-    - name: Commit and push changes to Argo repo
+    - name: Commit & Push to Argo Repo
       run: |
         cd argo
         git config user.name "github-actions"
         git config user.email "github-actions@github.com"
-        git commit -am "Update backend image to ${{ env.IMAGE_TAG }}"
+        git add k8s/backend-deployment.yaml
+        git commit -m "Update backend image to tag ${{ env.IMAGE_TAG }}"
         git push origin main
