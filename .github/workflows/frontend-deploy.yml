@@ -1,0 +1,44 @@
+name: Docker Auto Push
+
+on:
+  push:
+    branches:
+      - main  # Change this to your default branch if needed
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    env:
+      IMAGE_NAME: ashreesee/frontend
+      DOCKER_REGISTRY: docker.io
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Generate SHA + Timestamp tag
+        id: vars
+        run: |
+          SHORT_SHA=${GITHUB_SHA::7}
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          FINAL_TAG="${SHORT_SHA}-${TIMESTAMP}"
+          echo "final_tag=${FINAL_TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and Push Docker Image
+        run: |
+          docker build -t ${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.final_tag }} -f frontend/Dockerfile frontend/
+          docker push ${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.final_tag }}
+
+      - name: Show pushed tag
+        run: |
+          echo "✅ Pushed image tag: ${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.final_tag }}"
